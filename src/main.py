@@ -1,5 +1,4 @@
 from src.util import ReportingUtil, Report
-from src.util import APICall, APIParameter
 from src.util import Database, DatabaseParameter
 import pandas as pd
 import numpy as np
@@ -42,7 +41,7 @@ class Comparer:
         logging.info(f'Running comparer')
         self.compare()
         logging.info(f'Comparison complete')
-        #self.save_to_s3(s3_bucket, s3_base_path)
+        self.save_to_s3(s3_bucket, s3_base_path)
         logging.info(f'Posted results to {self.s3_location}')
         self.post_message()
         logging.info(f'Posted sns message')
@@ -150,9 +149,10 @@ class Comparer:
     def save_to_s3(self, s3_bucket, s3_base_path, withHeader=True):
         s3 = boto3.client('s3')
 
-        currentStrTimestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        tempfileName = tempfile.NamedTemporaryFile(suffix='csv')
+        currentStrTimestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        tempfileName = tempfile.NamedTemporaryFile(suffix='csv').name
 
+        logging.info(f'Saved tempfile to {tempfileName}')
         self.comparison.to_csv(tempfileName, index=False, encoding="utf-8", header=withHeader)
 
         s3_path = s3_base_path.format(currentStrTimestamp)
@@ -172,6 +172,7 @@ class Comparer:
         msg['executetime'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         msg['run_parameters'] = self.__to_dict()
 
+
         results = {}
         results['num_records'] = len(self.comparison.index)
         results['num_mismatches'] = len(self.diffs.index)
@@ -181,9 +182,11 @@ class Comparer:
         msg['results'] = results
 
         if self.is_failure():
-            failure_str = 'FAILURE'
+            failure_str = 'Failure'
         else:
             failure_str = 'Success'
+
+        msg['status'] = failure_str
 
         subject = f'Hilton Advance Dashboard Comparison: {failure_str}'
 
@@ -208,17 +211,18 @@ class Comparer:
         logging.info(f'Posted message to {topic}. {msg}')
 
 
-if __name__ == '__main__':
+def do(db_password, enterprise_token):
+
     site_id = 136
     site_company_group_id = 28
     start_date = '2019-06-01'
     end_date = '2019-06-01'
     enterprise_user = 'data.analytics@koddi.com'
-    enterprise_token = 'bd7582800821623d44d2f9a59d4607f5d1316e6f'
+    #enterprise_token = 'bd7582800821623d44d2f9a59d4607f5d1316e6f'
     enterprise_host = 'https://app.koddi.com'
 
     db_username = 'reportrunner'
-    db_password = 'R3p0rtRunn3r8139'
+    #db_password = 'R3p0rtRunn3r8139'
     db_database = 'datamart'
     db_url = 'prod-reporting.travelhook.com'
 
@@ -227,8 +231,8 @@ if __name__ == '__main__':
     sns_success_arn = 'arn:aws:sns:us-east-1:836434807709:hilton-advance-dashboard-comparison-success'
     sns_failure_arn = 'arn:aws:sns:us-east-1:836434807709:hilton-advance-dashboard-comparison-failure'
 
-    output_bucket = ''
-    output_path = ''
+    output_bucket = 'travel-prod-monitoring-us-east-1'
+    output_path = 'advance-dashboard/dt={}/comparison.csv'
 
     comparer = Comparer(site_id=site_id,
                         site_company_group_id=site_company_group_id,
