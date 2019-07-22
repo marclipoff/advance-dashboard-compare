@@ -215,8 +215,10 @@ def do(db_password, enterprise_token):
 
     site_id = 136
     site_company_group_id = 28
-    start_date = '2019-06-01'
-    end_date = '2019-06-01'
+    end_date = (datetime.date.today() - datetime.timedelta(days=1))
+    start_date = end_date - datetime.timedelta(days=29).strftime("%Y-%m-%d")
+    end_date = end_date.strftime("%Y-%m-%d")
+
     enterprise_user = 'data.analytics@koddi.com'
     #enterprise_token = 'bd7582800821623d44d2f9a59d4607f5d1316e6f'
     enterprise_host = 'https://app.koddi.com'
