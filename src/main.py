@@ -220,11 +220,9 @@ def do(db_password, enterprise_token):
     end_date = end_date.strftime("%Y-%m-%d")
 
     enterprise_user = 'data.analytics@koddi.com'
-    #enterprise_token = 'bd7582800821623d44d2f9a59d4607f5d1316e6f'
     enterprise_host = 'https://app.koddi.com'
 
     db_username = 'reportrunner'
-    #db_password = 'R3p0rtRunn3r8139'
     db_database = 'datamart'
     db_url = 'prod-reporting.travelhook.com'
 
