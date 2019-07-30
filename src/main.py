@@ -9,7 +9,7 @@ import json
 import logging
 
 logging.getLogger('').handlers = []
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=logging.DEBUG)
 
 
 class Comparer:
@@ -65,6 +65,8 @@ class Comparer:
         report = Report(
                 fields, dimensions, filters, self.start_date, self.end_date, self.site_id, publisher)
 
+        logging.debug(f"Getting enterprise data with {report}")
+
         res = ReportingUtil({
                     "user": self.enterprise_user,
                     "token": self.enterprise_token,
@@ -98,7 +100,6 @@ class Comparer:
         df_enterprise = df_enterprise.groupby(['date', 'hotelCode', 'brand', 'channelName', 'subChannelName']).sum().reset_index()
 
         return df_enterprise
-
 
     def __get_pm_data(self):
         db_parameter = DatabaseParameter(self.db_url, self.db_username, self.db_password, self.db_database)
@@ -191,6 +192,7 @@ class Comparer:
         subject = f'Hilton Advance Dashboard Comparison: {failure_str}'
 
         msg_str = json.dumps(msg, indent=2)
+        self.msg = msg
         return msg_str, subject
 
 
@@ -216,7 +218,7 @@ def do(db_password, enterprise_token):
     site_id = 136
     site_company_group_id = 28
     end_date = (datetime.date.today() - datetime.timedelta(days=1))
-    start_date = end_date - datetime.timedelta(days=29).strftime("%Y-%m-%d")
+    start_date = (end_date - datetime.timedelta(days=29)).strftime("%Y-%m-%d")
     end_date = end_date.strftime("%Y-%m-%d")
 
     enterprise_user = 'data.analytics@koddi.com'
@@ -250,3 +252,4 @@ def do(db_password, enterprise_token):
                         sns_failure_arn=sns_failure_arn)
 
     comparer.run(output_bucket, output_path)
+    return comparer.msg

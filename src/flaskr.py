@@ -8,7 +8,7 @@ import logging
 import traceback
 from . import main
 
-app = Flask('automation_api')
+app = Flask('advance_comparison')
 
 
 @app.route('/', methods=['GET'])
@@ -32,18 +32,22 @@ def compare():
 
     logging.info(f"Got post request for {request.args}")
 
+    if validate_request() is not None:
+        return validate_request()
+
     #get parameters from payload
     db_password = request.args.get('dbpassword')
     enterprise_token = request.args.get('enterprisetoken')
 
     try:
         logging.debug(f"Running for {db_password} {enterprise_token}")
-        main.do(db_password, enterprise_token)
+        resp = main.do(db_password, enterprise_token)
 
         status = 'success'
         message = 'success'
         response = jsonify({'status': status,
-                            'message': message})
+                            'message': message,
+                            'comparison': resp})
         response.status_code = 200
 
     except Exception as e:
